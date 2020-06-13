@@ -4,13 +4,17 @@
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
+#define X_FIELD -1
+#define EMPTY_FIELD 0
+#define O_FIELD 1
+
 #define SCREEN_WIDTH_THIRD SCREEN_WIDTH / 3
 #define SCREEN_HEIGHT_THIRD SCREEN_HEIGHT / 3
 
 /*
  *  Draw x (cross) player
  */
-void DrawX(int32_t square, SDL_Renderer *renderer)
+void DrawX(uint8_t square, SDL_Renderer *renderer)
 {
         // Draw NW to SE
         SDL_RenderDrawLine(renderer,
@@ -29,7 +33,7 @@ void DrawX(int32_t square, SDL_Renderer *renderer)
 /*
  *  Draw o (circle) player
  */
-void DrawO(int32_t square, SDL_Renderer *renderer)
+void DrawO(uint8_t square, SDL_Renderer *renderer)
 {
         int32_t centre_x = SCREEN_WIDTH_THIRD * (square % 3) + (SCREEN_WIDTH_THIRD / 2);
         int32_t centre_y = SCREEN_HEIGHT_THIRD * (square / 3) + (SCREEN_HEIGHT_THIRD / 2);
@@ -66,7 +70,7 @@ void DrawO(int32_t square, SDL_Renderer *renderer)
 /*
  *  Draw the winner in the center on a rectangle covering the middle on the screen 
  */
-void DrawWinner(char winner, SDL_Renderer *renderer)
+void DrawWinner(int8_t winner, SDL_Renderer *renderer)
 {
         SDL_Rect rectangle;
         rectangle.x = SCREEN_WIDTH / 4;
@@ -78,7 +82,7 @@ void DrawWinner(char winner, SDL_Renderer *renderer)
         SDL_RenderFillRect(renderer, &rectangle);
 
         SDL_SetRenderDrawColor(renderer, 20, 20, 20, SDL_ALPHA_OPAQUE);
-        if (winner == 'x')
+        if (winner == X_FIELD)
         {
                 DrawX(4, renderer);
         }
@@ -93,7 +97,7 @@ void DrawWinner(char winner, SDL_Renderer *renderer)
  *  Grids are numbered in a left to right, top to bottom pattern
  *  from top left (0) to bottom right (8)
  */
-int GridPosition(int32_t x, int32_t y)
+int8_t GridPosition(int32_t x, int32_t y)
 {
         x /= SCREEN_WIDTH_THIRD;
         y /= SCREEN_HEIGHT_THIRD;
@@ -104,29 +108,29 @@ int GridPosition(int32_t x, int32_t y)
  *  Check for a winner.
  *  If a player has won, return that player, otherwise a space (' ')
  */
-char Winner(char board[9])
+int8_t Winner(int8_t board[9])
 {
-        unsigned win_conditions[8][3] = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 4, 8}, {2, 4, 6}};
-        for (int i = 0; i < 8; ++i)
+        uint8_t win_conditions[8][3] = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 4, 8}, {2, 4, 6}};
+        for (uint8_t i = 0; i < 8; ++i)
         {
-                if (board[win_conditions[i][0]] != ' ' &&
+                if (board[win_conditions[i][0]] != EMPTY_FIELD &&
                     board[win_conditions[i][0]] == board[win_conditions[i][1]] &&
                     board[win_conditions[i][0]] == board[win_conditions[i][2]])
                         return board[win_conditions[i][2]];
         }
-        return ' ';
+        return EMPTY_FIELD;
 }
 
 int main(int argc, char *argv[])
 {
-        char board[9] = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
         int32_t mouse_position_x;
         int32_t mouse_position_y;
-        int32_t i;
-        int32_t current_position;
         uint32_t mouse_button;
-        char turn = 'x'; /* Starting player */
-        char winner = ' ';
+        int8_t board[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
+        int8_t winner = EMPTY_FIELD;
+        int8_t turn = X_FIELD; /* Starting player */
+        int8_t current_position;
+        int8_t i;
 
         if (SDL_Init(SDL_INIT_EVERYTHING) == 0)
         {
@@ -156,10 +160,10 @@ int main(int argc, char *argv[])
                                 {
                                         switch (board[i])
                                         {
-                                        case 'x':
+                                        case X_FIELD:
                                                 DrawX(i, renderer);
                                                 break;
-                                        case 'o':
+                                        case O_FIELD:
                                                 DrawO(i, renderer);
                                                 break;
                                         default:
@@ -168,7 +172,7 @@ int main(int argc, char *argv[])
                                         }
                                 }
 
-                                if (winner != ' ')
+                                if (winner != EMPTY_FIELD)
                                 {
                                         DrawWinner(winner, renderer);
                                 }
@@ -190,13 +194,13 @@ int main(int argc, char *argv[])
                                         {
                                                 if (mouse_button & SDL_BUTTON(SDL_BUTTON_LEFT))
                                                 {
-                                                        if (winner == ' ')
+                                                        if (winner == EMPTY_FIELD)
                                                         {
                                                                 current_position = GridPosition(mouse_position_x, mouse_position_y);
-                                                                if (board[current_position] == ' ')
+                                                                if (board[current_position] == 0)
                                                                 {
                                                                         board[current_position] = turn;
-                                                                        turn = (turn == 'x' ? 'o' : 'x');
+                                                                        turn = (turn == X_FIELD ? O_FIELD : X_FIELD);
                                                                         winner = Winner(board);
                                                                 }
                                                         }
