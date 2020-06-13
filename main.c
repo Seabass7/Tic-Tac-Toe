@@ -106,7 +106,7 @@ int8_t GridPosition(int32_t x, int32_t y)
 
 /*
  *  Check for a winner.
- *  If a player has won, return that player, otherwise a space (' ')
+ *  If a player has won, return that player
  */
 int8_t Winner(int8_t board[9])
 {
