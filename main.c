@@ -64,6 +64,31 @@ void DrawO(int32_t square, SDL_Renderer *renderer)
 }
 
 /*
+ *  Draw the winner in the center on a rectangle covering the middle on the screen 
+ */
+void DrawWinner(char winner, SDL_Renderer *renderer)
+{
+        SDL_Rect rectangle;
+        rectangle.x = SCREEN_WIDTH / 4;
+        rectangle.y = SCREEN_HEIGHT / 4;
+        rectangle.w = SCREEN_WIDTH / 2;
+        rectangle.h = SCREEN_HEIGHT / 2;
+
+        SDL_SetRenderDrawColor(renderer, 200, 200, 200, SDL_ALPHA_OPAQUE);
+        SDL_RenderFillRect(renderer, &rectangle);
+
+        SDL_SetRenderDrawColor(renderer, 20, 20, 20, SDL_ALPHA_OPAQUE);
+        if (winner == 'x')
+        {
+                DrawX(4, renderer);
+        }
+        else
+        {
+                DrawO(4, renderer);
+        }
+}
+
+/*
  *  Convert x, y coordinates to grid number (0-8).
  *  Grids are numbered in a left to right, top to bottom pattern
  *  from top left (0) to bottom right (8)
@@ -75,14 +100,33 @@ int GridPosition(int32_t x, int32_t y)
         return y * 3 + x;
 }
 
+/*
+ *  Check for a winner.
+ *  If a player has won, return that player, otherwise a space (' ')
+ */
+char Winner(char board[9])
+{
+        unsigned win_conditions[8][3] = {{0, 1, 2}, {3, 4, 5}, {6, 7, 8}, {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, {0, 4, 8}, {2, 4, 6}};
+        for (int i = 0; i < 8; ++i)
+        {
+                if (board[win_conditions[i][0]] != ' ' &&
+                    board[win_conditions[i][0]] == board[win_conditions[i][1]] &&
+                    board[win_conditions[i][0]] == board[win_conditions[i][2]])
+                        return board[win_conditions[i][2]];
+        }
+        return ' ';
+}
+
 int main(int argc, char *argv[])
 {
         char board[9] = {' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '};
         int32_t mouse_position_x;
         int32_t mouse_position_y;
         int32_t i;
+        int32_t current_position;
         uint32_t mouse_button;
         char turn = 'x'; /* Starting player */
+        char winner = ' ';
 
         if (SDL_Init(SDL_INIT_EVERYTHING) == 0)
         {
@@ -124,6 +168,11 @@ int main(int argc, char *argv[])
                                         }
                                 }
 
+                                if (winner != ' ')
+                                {
+                                        DrawWinner(winner, renderer);
+                                }
+
                                 // Send to screen
                                 SDL_RenderPresent(renderer);
 
@@ -135,12 +184,22 @@ int main(int argc, char *argv[])
                                         {
                                                 done = SDL_TRUE;
                                         }
+
+                                        // Player making a move
                                         if (event.type == SDL_MOUSEBUTTONUP)
                                         {
                                                 if (mouse_button & SDL_BUTTON(SDL_BUTTON_LEFT))
                                                 {
-                                                        board[GridPosition(mouse_position_x, mouse_position_y)] = turn;
-                                                        turn = (turn == 'x' ? 'o' : 'x');
+                                                        if (winner == ' ')
+                                                        {
+                                                                current_position = GridPosition(mouse_position_x, mouse_position_y);
+                                                                if (board[current_position] == ' ')
+                                                                {
+                                                                        board[GridPosition(mouse_position_x, mouse_position_y)] = turn;
+                                                                        turn = (turn == 'x' ? 'o' : 'x');
+                                                                        winner = Winner(board);
+                                                                }
+                                                        }
                                                 }
                                         }
                                 }
