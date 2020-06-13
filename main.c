@@ -195,7 +195,7 @@ int main(int argc, char *argv[])
                                                                 current_position = GridPosition(mouse_position_x, mouse_position_y);
                                                                 if (board[current_position] == ' ')
                                                                 {
-                                                                        board[GridPosition(mouse_position_x, mouse_position_y)] = turn;
+                                                                        board[current_position] = turn;
                                                                         turn = (turn == 'x' ? 'o' : 'x');
                                                                         winner = Winner(board);
                                                                 }
