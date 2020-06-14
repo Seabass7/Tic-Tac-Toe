@@ -7,10 +7,14 @@ SDL2, to install using apt:
   apt-get install libsdl2-dev
 ```
 
-## Installation
-Run the Makefile:
+## Running the game
+Compile using the Makefile:
 ```bash
   make
+```
+Then start the game:
+```bash
+  ./tic-tac-toe
 ```
 
 ## Notes
