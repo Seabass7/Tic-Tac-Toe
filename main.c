@@ -1,12 +1,14 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_render.h>
+#include <stdlib.h>
+#include <time.h>
 
 #define SCREEN_WIDTH 640
 #define SCREEN_HEIGHT 480
 
-#define X_FIELD -1
+#define PLAYER -1
 #define EMPTY_FIELD 0
-#define O_FIELD 1
+#define COMPUTER 1
 
 #define SCREEN_WIDTH_THIRD SCREEN_WIDTH / 3
 #define SCREEN_HEIGHT_THIRD SCREEN_HEIGHT / 3
@@ -82,7 +84,7 @@ void DrawWinner(int8_t winner, SDL_Renderer *renderer)
         SDL_RenderFillRect(renderer, &rectangle);
 
         SDL_SetRenderDrawColor(renderer, 20, 20, 20, SDL_ALPHA_OPAQUE);
-        if (winner == X_FIELD)
+        if (winner == PLAYER)
         {
                 DrawX(4, renderer);
         }
@@ -121,6 +123,84 @@ int8_t Winner(int8_t board[9])
         return EMPTY_FIELD;
 }
 
+int8_t Min(int8_t a, int8_t b)
+{
+        return (a > b ? b : a);
+}
+
+int8_t Max(int8_t a, int8_t b)
+{
+        return (a > b ? a : b);
+}
+
+/*
+ *  Minimax calculations 
+ */
+int8_t Minimax(int8_t board[9], int8_t player, int8_t depth)
+{
+        int8_t score = 0; /* Initial value is score if tied */
+        int8_t current_score;
+        int8_t winner = Winner(board);
+        if (winner != EMPTY_FIELD || depth == 0)
+        {
+                /* Let a fast win be worth more than a slower one */
+                return winner * depth;
+        }
+
+        for (uint8_t i = 0; i < 9; i++)
+        {
+                if (board[i] == EMPTY_FIELD)
+                {
+                        board[i] = player;
+                        if (player == PLAYER)
+                        {
+                                current_score = Minimax(board, COMPUTER, depth - 1) - depth;
+                                score = Min(current_score, score);
+                        }
+                        else
+                        {
+                                current_score = Minimax(board, PLAYER, depth - 1) + depth;
+                                score = Max(current_score, score);
+                        }
+                        board[i] = EMPTY_FIELD;
+                }
+        }
+        return score;
+}
+
+/*
+ *  Let the computer calculate the best move 
+ */
+void ComputerMove(int8_t board[9])
+{
+        int8_t move = 0;
+        int8_t score = -20;
+        int8_t current_score;
+        for (uint8_t i = 0; i < 9; i++)
+        {
+                if (board[i] == EMPTY_FIELD)
+                {
+                        board[i] = COMPUTER;
+                        current_score = Minimax(board, PLAYER, 8);
+                        if (current_score > score)
+                        {
+                                score = current_score;
+                                move = i;
+                        }
+                        /* If the same score, choose one of the moves randomly */
+                        else if (current_score == score)
+                        {
+                                if (rand() % 2 == 0)
+                                {
+                                        move = i;
+                                }
+                        }
+                        board[i] = EMPTY_FIELD;
+                }
+        }
+        board[move] = COMPUTER;
+}
+
 int main(int argc, char *argv[])
 {
         int32_t mouse_position_x;
@@ -128,9 +208,11 @@ int main(int argc, char *argv[])
         uint32_t mouse_button;
         int8_t board[9] = {0, 0, 0, 0, 0, 0, 0, 0, 0};
         int8_t winner = EMPTY_FIELD;
-        int8_t turn = X_FIELD; /* Starting player */
+        int8_t turn = COMPUTER; /* Starting player */
         int8_t current_position;
         int8_t i;
+
+        srand(time(NULL));
 
         if (SDL_Init(SDL_INIT_EVERYTHING) == 0)
         {
@@ -160,10 +242,10 @@ int main(int argc, char *argv[])
                                 {
                                         switch (board[i])
                                         {
-                                        case X_FIELD:
+                                        case PLAYER:
                                                 DrawX(i, renderer);
                                                 break;
-                                        case O_FIELD:
+                                        case COMPUTER:
                                                 DrawO(i, renderer);
                                                 break;
                                         default:
@@ -182,6 +264,13 @@ int main(int argc, char *argv[])
 
                                 mouse_button = SDL_GetMouseState(&mouse_position_x, &mouse_position_y);
 
+                                if (winner == EMPTY_FIELD && turn == COMPUTER)
+                                {
+                                        ComputerMove(board);
+                                        winner = Winner(board);
+                                        turn = PLAYER;
+                                }
+
                                 while (SDL_PollEvent(&event))
                                 {
                                         if (event.type == SDL_QUIT)
@@ -194,13 +283,13 @@ int main(int argc, char *argv[])
                                         {
                                                 if (mouse_button & SDL_BUTTON(SDL_BUTTON_LEFT))
                                                 {
-                                                        if (winner == EMPTY_FIELD)
+                                                        if (winner == EMPTY_FIELD && turn == PLAYER)
                                                         {
                                                                 current_position = GridPosition(mouse_position_x, mouse_position_y);
                                                                 if (board[current_position] == 0)
                                                                 {
-                                                                        board[current_position] = turn;
-                                                                        turn = (turn == X_FIELD ? O_FIELD : X_FIELD);
+                                                                        board[current_position] = PLAYER;
+                                                                        turn = COMPUTER;
                                                                         winner = Winner(board);
                                                                 }
                                                         }
