@@ -286,7 +286,7 @@ int main(int argc, char *argv[])
                                                         if (winner == EMPTY_FIELD && turn == PLAYER)
                                                         {
                                                                 current_position = GridPosition(mouse_position_x, mouse_position_y);
-                                                                if (board[current_position] == 0)
+                                                                if (board[current_position] == EMPTY_FIELD)
                                                                 {
                                                                         board[current_position] = PLAYER;
                                                                         turn = COMPUTER;
